@@ -28,7 +28,7 @@
 //! | Function | Answer |
 //! |---|---|
 //! | `account()` | `{ display, capabilities }`: who is signed in. Reject with code `unauthenticated` when nobody is. |
-//! | `list(path)` | the files and folders in one folder, as entries. `""` is the root. |
+//! | `list(path)` | the files and folders in one folder, as entries. `""` is the root, and a folder's `path` is what opens it. |
 //! | `read(id)` | the file's bytes: a `Uint8Array`, an `ArrayBuffer` or a `Blob`. |
 //! | `write(id, bytes, ifMatch)` | the stored file, as an entry. Reject with code `conflict` when `ifMatch` (the etag the file was read at, or `undefined`) is no longer the stored version. |
 //! | `create(folder, name, bytes)` | the new file, as an entry. |
@@ -37,9 +37,10 @@
 //! | `signOut()` | optional. |
 //!
 //! An entry is `{ id, name, path, kind, size, modified, mime, etag, writable, room, sharedBy }`.
-//! Only `id` is required: it is the page's own handle, and the app only hands it back. `name`
-//! defaults to the last part of `id`, `kind` to `"file"` (the other value is `"folder"`),
-//! `writable` to `true` and `room` to `id`. These are the fields of [`craft_cloud::Entry`].
+//! Only `id` is required: it is the page's own handle, and the app only hands it back. `path` and
+//! `room` default to `id`, `name` to the last part of `id`, `kind` to `"file"` (the other value
+//! is `"folder"`) and `writable` to `true`. Paths use `/`, because the pages find a folder's
+//! parent by cutting at the last `/`. These are the fields of [`craft_cloud::Entry`].
 //!
 //! A rejection's `code` says what went wrong, as [`Fault`](craft_ui::cloud::Fault) does:
 //! `conflict`, `unauthenticated`, `not_linked` or `unreachable`. Anything else is a refusal, and

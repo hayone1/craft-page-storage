@@ -31,7 +31,7 @@ Without `window.craftStorage`, `available()` is `false` and nothing changes. On 
 | Function | Answer |
 |---|---|
 | `account()` | `{ display, capabilities }`: who is signed in. Reject with code `unauthenticated` when nobody is. |
-| `list(path)` | The files and folders in one folder, as entries. `""` is the top folder. |
+| `list(path)` | The files and folders in one folder, as entries. `""` is the top folder, and a folder's `path` is what opens it. |
 | `read(id)` | The file's bytes: a `Uint8Array`, an `ArrayBuffer` or a `Blob`. |
 | `write(id, bytes, ifMatch)` | The stored file, as an entry. `ifMatch` is the etag the file was read at, or `undefined`. Reject with code `conflict` when it is no longer the stored version, so a save never overwrites someone else's work. |
 | `create(folder, name, bytes)` | The new file, as an entry. |
@@ -39,7 +39,7 @@ Without `window.craftStorage`, `available()` is `false` and nothing changes. On 
 | `signIn()` | Optional. Settles once the user has signed in, or gave up. |
 | `signOut()` | Optional. |
 
-An **entry** is `{ id, name, path, kind, size, modified, mime, etag, writable, room, sharedBy }`. Only `id` is required. It is the page's own handle for the file, and the app only hands it back. `name` defaults to the last part of `id`, `kind` to `"file"` (the other kind is `"folder"`), `writable` to `true` and `room` to `id`. These are the fields of `craft_cloud::Entry`.
+An **entry** is `{ id, name, path, kind, size, modified, mime, etag, writable, room, sharedBy }`. Only `id` is required. It is the page's own handle for the file, and the app only hands it back. `path` and `room` default to `id`, `name` to the last part of `id`, `kind` to `"file"` (the other kind is `"folder"`) and `writable` to `true`. Paths use `/`, because the Open page finds a folder's parent by cutting at the last `/`. These are the fields of `craft_cloud::Entry`.
 
 A **rejection** can carry a `code`: `conflict`, `unauthenticated`, `not_linked` or `unreachable`. Anything else is a refusal, and the app shows its `message`.
 

@@ -161,7 +161,7 @@ async fn a_folder_lists_its_files_and_folders() {
     let Some(Event::Listed { path, entries: Ok(entries) }) = answer(Job::List("home".into())).await else { panic!("no listing") };
     assert_eq!(path, "home");
     assert_eq!(entries.len(), 2);
-    assert_eq!((entries[0].name.as_str(), entries[0].kind), ("Plans", EntryKind::Folder));
+    assert_eq!((entries[0].name.as_str(), entries[0].kind, entries[0].path.as_str()), ("Plans", EntryKind::Folder, "home/Plans"));
     assert_eq!((entries[1].name.as_str(), entries[1].size, entries[1].etag.as_deref()), ("a.txt", Some(3), Some("1")));
     let Some(Event::Listed { entries, .. }) = answer(Job::List("broken".into())).await else { panic!("no listing") };
     assert!(matches!(entries, Err(Fault::Refused(_))));
@@ -307,6 +307,14 @@ async fn the_open_and_save_pages_work_through_the_page() {
     cloud::start(&mut app);
     frame(&mut app, &ctx).await;
     assert_eq!(app.cloud.account.as_ref().map(|a| a.display.as_str()), Some("Ada"));
+    // Into a folder by its path, as the Open page does, and back.
+    let plans = app.cloud.mine.entries.iter().find(|e| e.kind == EntryKind::Folder).cloned().expect("the root lists a folder");
+    cloud::browse(&mut app, &plans.path);
+    frame(&mut app, &ctx).await;
+    assert_eq!(app.cloud.mine.path, "home/Plans");
+    assert!(log().contains(r#"["list","home/Plans"]"#), "{}", log());
+    cloud::browse(&mut app, "");
+    frame(&mut app, &ctx).await;
     let entry = app.cloud.mine.entries.iter().find(|e| e.id == "home/a.txt").cloned().expect("the root lists a.txt");
 
     cloud::open_entry(&mut app, entry, None);

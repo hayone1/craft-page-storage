@@ -22,7 +22,8 @@ pub(crate) fn entry(v: &Value) -> Result<Entry, String> {
     Ok(Entry {
         name: text("name").unwrap_or_else(|| last_part(&id).to_owned()),
         room: text("room").unwrap_or_else(|| id.clone()),
-        path: text("path").unwrap_or_default(),
+        // The Open page browses into a folder by its path, so it can't be empty.
+        path: text("path").unwrap_or_else(|| id.clone()),
         kind,
         size: v.get("size").and_then(Value::as_u64),
         modified: text("modified"),
@@ -86,7 +87,7 @@ mod tests {
     #[test]
     fn an_entry_needs_only_an_id() {
         let e = entry(&json!({"id": "cloud:home/Plans/a.psd"})).unwrap();
-        assert_eq!((e.name.as_str(), e.room.as_str(), e.path.as_str()), ("a.psd", "cloud:home/Plans/a.psd", ""));
+        assert_eq!((e.name.as_str(), e.room.as_str(), e.path.as_str()), ("a.psd", "cloud:home/Plans/a.psd", "cloud:home/Plans/a.psd"));
         assert_eq!(e.kind, EntryKind::File);
         assert!(e.writable);
         assert_eq!((e.size, e.etag, e.shared_by), (None, None, None));
