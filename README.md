@@ -8,7 +8,7 @@ This crate is that backend for **the page that serves the app**. A page that sho
 
 ## In an app
 
-The app already uses `craft_ui::cloud` (the shared Open and Save pages). Its web shell connects this backend once the page offers storage, the same way it connects any other backend. It checks on each frame until then, because a page may hand the storage over after the app has started. `@craft/app` ([storytold/craft-libs#413](https://github.com/storytold/craft-libs/pull/413)) does that: it sets `window.craftStorage` on the frame once the app's `window.<app>` appears.
+The app already uses `craft_ui::cloud` (the shared Open and Save pages). Its web shell connects this backend once the page offers storage, the same way it connects any other backend. It checks on each frame until then, because a page may hand the storage over after the app has started. `@craft/app` ([storytold/craft-libs#413](https://github.com/storytold/craft-libs/pull/413)) sets `window.craftStorage` on the frame as soon as the frame holds the app's page. That is usually before the app starts, but not always, so the app should keep looking.
 
 ```toml
 [target.'cfg(target_arch = "wasm32")'.dependencies]

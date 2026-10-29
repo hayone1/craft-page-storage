@@ -348,7 +348,7 @@ async fn the_open_and_save_pages_work_through_the_page() {
 
 #[wasm_bindgen_test]
 async fn a_page_can_offer_its_storage_after_the_app_started() {
-    // `@craft/app` sets `window.craftStorage` on the frame only once the app's API is there.
+    // `@craft/app` sets `window.craftStorage` on the frame as soon as it can, which may be after the app's first code runs.
     no_host();
     let ctx = egui::Context::default();
     let mut app = notebook();

@@ -10,7 +10,8 @@
 //! [`CloudBackend`](craft_ui::cloud::CloudBackend) that reaches it, so an app connects it like any
 //! other backend and grows no client of its own. The app checks on each frame until the page
 //! offers it, because a page may hand it over after the app has started (`@craft/app` sets it on
-//! the frame once the app's `window.<app>` appears):
+//! the frame as soon as the frame holds the app's page, which is usually but not always before
+//! the app's first code runs):
 //!
 //! ```ignore
 //! if !app.cloud.available() && craft_page_storage::available() {
