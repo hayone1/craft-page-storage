@@ -8,17 +8,20 @@
 //! shows a Craft app's web build (a cloud drive, a team portal, a page that embeds it with
 //! `@craft/app`) puts its storage on `window.craftStorage`. [`PageStorage`] is the
 //! [`CloudBackend`](craft_ui::cloud::CloudBackend) that reaches it, so an app connects it like any
-//! other backend and grows no client of its own:
+//! other backend and grows no client of its own. The app checks on each frame until the page
+//! offers it, because a page may hand it over after the app has started (`@craft/app` sets it on
+//! the frame once the app's `window.<app>` appears):
 //!
 //! ```ignore
-//! if craft_page_storage::available() {
+//! if !app.cloud.available() && craft_page_storage::available() {
 //!     let ctx = ctx.clone();
 //!     app.cloud.connect(craft_page_storage::PageStorage::new(move || ctx.request_repaint()));
 //! }
 //! ```
 //!
-//! Without `window.craftStorage`, and on a native build, [`available`] is `false` and the app
-//! offers whatever it offered before.
+//! [`available`] only reads a few properties, so a check per frame costs nothing that matters.
+//! Without `window.craftStorage`, and on a native build, it stays `false` and the app offers
+//! whatever it offered before.
 //!
 //! # What the page provides
 //!

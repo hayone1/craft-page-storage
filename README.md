@@ -8,7 +8,7 @@ This crate is that backend for **the page that serves the app**. A page that sho
 
 ## In an app
 
-The app already uses `craft_ui::cloud` (the shared Open and Save pages). Its web shell connects this backend when the page offers storage, the same way it connects any other backend:
+The app already uses `craft_ui::cloud` (the shared Open and Save pages). Its web shell connects this backend once the page offers storage, the same way it connects any other backend. It checks on each frame until then, because a page may hand the storage over after the app has started. `@craft/app` ([storytold/craft-libs#413](https://github.com/storytold/craft-libs/pull/413)) does that: it sets `window.craftStorage` on the frame once the app's `window.<app>` appears.
 
 ```toml
 [target.'cfg(target_arch = "wasm32")'.dependencies]
@@ -16,13 +16,14 @@ craft-page-storage = { git = "https://github.com/hayone1/craft-page-storage", re
 ```
 
 ```rust
-if craft_page_storage::available() {
+// In the app's update, until the page has offered its storage.
+if !app.cloud.available() && craft_page_storage::available() {
     let ctx = ctx.clone();
     app.cloud.connect(craft_page_storage::PageStorage::new(move || ctx.request_repaint()));
 }
 ```
 
-Without `window.craftStorage`, `available()` is `false` and nothing changes. On a native build it is always `false`.
+`available()` only reads a few properties, so checking it on each frame is cheap. Without `window.craftStorage` it stays `false` and nothing changes. On a native build it is always `false`.
 
 ## In a page
 
@@ -72,7 +73,7 @@ window.craftStorage = {
 };
 ```
 
-The page must set `window.craftStorage` before the app starts, or the app won't offer it.
+The page can set `window.craftStorage` before or after the app starts. Once the app has connected it, the object must stay in place: the app looks it up again for every call.
 
 ## Status
 

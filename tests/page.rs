@@ -285,6 +285,24 @@ impl CloudApp for Notebook {
     }
 }
 
+fn notebook() -> Notebook {
+    Notebook {
+        cloud: CloudFiles::new(),
+        share: ShareDialog::new(),
+        presence: PresenceBar::new(),
+        opened: Vec::new(),
+        saved: Vec::new(),
+        said: Vec::new(),
+    }
+}
+
+/// What an app's update does until the page offers its storage (the README's wiring).
+fn connect_when_offered(app: &mut Notebook) {
+    if !app.cloud.available() && available() {
+        app.cloud.connect(PageStorage::new(|| ()));
+    }
+}
+
 /// Lets the page answer, then hands the answers to the pages, as a frame would.
 async fn frame(app: &mut Notebook, ctx: &egui::Context) {
     wait(20).await;
@@ -295,15 +313,8 @@ async fn frame(app: &mut Notebook, ctx: &egui::Context) {
 async fn the_open_and_save_pages_work_through_the_page() {
     install();
     let ctx = egui::Context::default();
-    let mut app = Notebook {
-        cloud: CloudFiles::new(),
-        share: ShareDialog::new(),
-        presence: PresenceBar::new(),
-        opened: Vec::new(),
-        saved: Vec::new(),
-        said: Vec::new(),
-    };
-    app.cloud.connect(PageStorage::new(|| ()));
+    let mut app = notebook();
+    connect_when_offered(&mut app);
     cloud::start(&mut app);
     frame(&mut app, &ctx).await;
     assert_eq!(app.cloud.account.as_ref().map(|a| a.display.as_str()), Some("Ada"));
@@ -333,4 +344,22 @@ async fn the_open_and_save_pages_work_through_the_page() {
     assert_eq!(app.saved, [1]);
     assert!(app.cloud.conflict.is_some(), "{:?}", app.said);
     assert!(log().contains(r#"["write","home/a.txt",[7,7],"2"]"#), "{}", log());
+}
+
+#[wasm_bindgen_test]
+async fn a_page_can_offer_its_storage_after_the_app_started() {
+    // `@craft/app` sets `window.craftStorage` on the frame only once the app's API is there.
+    no_host();
+    let ctx = egui::Context::default();
+    let mut app = notebook();
+    connect_when_offered(&mut app);
+    cloud::start(&mut app);
+    assert!(!app.cloud.available());
+    install();
+    connect_when_offered(&mut app);
+    assert!(app.cloud.available());
+    cloud::start(&mut app);
+    frame(&mut app, &ctx).await;
+    assert_eq!(app.cloud.account.as_ref().map(|a| a.display.as_str()), Some("Ada"));
+    assert!(app.cloud.mine.entries.iter().any(|e| e.id == "home/a.txt"));
 }
